@@ -1,4 +1,5 @@
 from flask import request, jsonify, Blueprint 
+from sqlalchemy.sql import text 
 from models import Employee, db
 
 
@@ -69,45 +70,99 @@ def add_employees():
         print(f"Error occurred: {e}")  # Optional logging
         return jsonify({'error': 'An unexpected error occurred'}), 500
 
-@employee_bp.route('/employees/<int:id>', methods=['PUT'])
-def update_employee(id):
+@employee_bp.route('/employees/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+def employee_operations(id):
     try:
-        employee = Employee.query.get(id)
-        
-        if not employee:
-            return jsonify({'error':'Employee not found'}), 404
-        
-        data = request.json
-        name = data.get('name')
-        department = data.get('department')
-        designation = data.get('designation')
-        salary = data.get('salary')
-        
-        if not any([name, department, designation, salary]):
-            return jsonify({'error':'at least one field'})
-        
-        if name:
-            employee.name = name
-        if department:
-            employee.department = department
-        if designation:
-            employee.designation = designation
-        if salary is not None:
-            employee.salary = salary
-            
-        db.session.commit()
-        
-        return jsonify({
-            'message': 'Employee update successfully',
-            'Employee':{
+        # Handle GET request: Fetch employee details
+        if request.method == 'GET':
+            employee = Employee.query.get(id)
+            if not employee:
+                return jsonify({'error': 'Employee not found'}), 404
+
+            return jsonify({
                 'id': employee.id,
                 'name': employee.name,
                 'department': employee.department,
                 'designation': employee.designation,
                 'salary': employee.salary
-            }
-        }), 200
+            }), 200
+
+        # Handle PUT request: Update employee details
+        elif request.method == 'PUT':
+            employee = Employee.query.get(id)
+            if not employee:
+                return jsonify({'error': 'Employee not found'}), 404
+
+            data = request.json
+            if not data:
+                return jsonify({'error': 'Request payload must be in JSON format'}), 400
+
+            # Update fields if provided
+            name = data.get('name')
+            department = data.get('department')
+            designation = data.get('designation')
+            salary = data.get('salary')
+
+            if name:
+                employee.name = name
+            if department:
+                employee.department = department
+            if designation:
+                employee.designation = designation
+            if salary is not None:
+                employee.salary = salary
+
+            db.session.commit()
+
+            return jsonify({
+                'message': 'Employee updated successfully',
+                'employee': {
+                    'id': employee.id,
+                    'name': employee.name,
+                    'department': employee.department,
+                    'designation': employee.designation,
+                    'salary': employee.salary
+                }
+            }), 200
+
+        # Handle DELETE request: Delete employee
+        elif request.method == 'DELETE':
+            employee = Employee.query.get(id)
+            if not employee:
+                return jsonify({'error': 'Employee not found'}), 404
+
+            db.session.delete(employee)
+            db.session.commit()
+
+            return jsonify({'message': f'Employee with ID {id} has been deleted successfully'}), 200
+
     except Exception as e:
-        return jsonify({'error':str(e)}), 500
+        return jsonify({'error': str(e)}), 500
+
     
-    
+@employee_bp.route('/employee/dept/<string:department>', methods=['GET'])
+def get_employees_by_department(department):
+    try:
+        # Use text() to explicitly declare the SQL query
+        query = text("SELECT id, name, department, designation, salary FROM employee WHERE department = :department")
+        result = db.session.execute(query, {'department': department}).fetchall()
+
+        if not result:
+            return jsonify({'error': f'No employees found in the {department} department'}), 404
+
+        # Format the response
+        employees = [
+            {
+                'id': row.id,
+                'name': row.name,
+                'department': row.department,
+                'designation': row.designation,
+                'salary': row.salary
+            }
+            for row in result
+        ]
+
+        return jsonify({'employees': employees}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
