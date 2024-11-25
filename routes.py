@@ -42,7 +42,7 @@ def add_employees():
             missing_fields.append('department')
         if not designation:
             missing_fields.append('designation')
-        if salary is None:  # Explicit check for None (to allow 0.0 as valid)
+        if salary is None: 
             missing_fields.append('salary')
 
         if missing_fields:
@@ -69,3 +69,45 @@ def add_employees():
         print(f"Error occurred: {e}")  # Optional logging
         return jsonify({'error': 'An unexpected error occurred'}), 500
 
+@employee_bp.route('/employees/<int:id>', methods=['PUT'])
+def update_employee(id):
+    try:
+        employee = Employee.query.get(id)
+        
+        if not employee:
+            return jsonify({'error':'Employee not found'}), 404
+        
+        data = request.json
+        name = data.get('name')
+        department = data.get('department')
+        designation = data.get('designation')
+        salary = data.get('salary')
+        
+        if not any([name, department, designation, salary]):
+            return jsonify({'error':'at least one field'})
+        
+        if name:
+            employee.name = name
+        if department:
+            employee.department = department
+        if designation:
+            employee.designation = designation
+        if salary is not None:
+            employee.salary = salary
+            
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Employee update successfully',
+            'Employee':{
+                'id': employee.id,
+                'name': employee.name,
+                'department': employee.department,
+                'designation': employee.designation,
+                'salary': employee.salary
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({'error':str(e)}), 500
+    
+    
