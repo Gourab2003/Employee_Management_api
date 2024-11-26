@@ -5,6 +5,8 @@ from models import Employee, db
 
 employee_bp =  Blueprint('employees',__name__)
 
+
+
 @employee_bp.route('/employees', methods=['GET'])
 def get_employees():
     employees = Employee.query.all()
@@ -19,6 +21,8 @@ def get_employees():
         for emp in employees
     ]
     return jsonify(employee_list), 200
+
+
 
 
 @employee_bp.route('/employees', methods=['POST'])
@@ -69,6 +73,8 @@ def add_employees():
     except Exception as e:
         print(f"Error occurred: {e}")  # Optional logging
         return jsonify({'error': 'An unexpected error occurred'}), 500
+
+
 
 @employee_bp.route('/employees/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 def employee_operations(id):
@@ -140,6 +146,8 @@ def employee_operations(id):
         return jsonify({'error': str(e)}), 500
 
     
+    
+    
 @employee_bp.route('/employee/dept/<string:department>', methods=['GET'])
 def get_employees_by_department(department):
     try:
@@ -163,6 +171,28 @@ def get_employees_by_department(department):
         ]
 
         return jsonify({'employees': employees}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+@employee_bp.route('/employees/name/<string:name>', methods=['GET'])
+def get_employees_by_name(name):
+    try:
+        # Create raw SQL query
+        query = text("SELECT id, name, department, designation, salary FROM employee WHERE name LIKE :name")
+        
+        # Execute the query
+        results = db.session.execute(query, {'name': f'%{name}%'}).fetchall()
+
+        # Convert rows to dictionaries
+        employees = [row._asdict() for row in results]
+
+        if not employees:
+            return jsonify({'message': 'No employees found with the specified name'}), 404
+
+        return jsonify({'employees': employees}), 200
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
