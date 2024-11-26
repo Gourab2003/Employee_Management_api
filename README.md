@@ -14,14 +14,14 @@ This project is a simple RESTful API for managing employee data. It allows basic
 
 1. Clone this repository:
     ```bash
-    git clone https://github.com/yourusername/employee-management-api.git
+    git clone https://github.com/gourab2003/employee-management-api.git
     ```
 2. Navigate to the project directory:
     ```bash
     cd employee-management-api
     ```
 3. Install the required dependencies:
-    ```bash
+    ```https
     pip install -r requirements.txt
     ```
 
@@ -41,3 +41,34 @@ This project is a simple RESTful API for managing employee data. It allows basic
 
 ```http
 GET /api/employees
+```
+
+### Get Employee with Specific id
+
+```http
+GET /api/employees/:id
+```
+
+### Update Specific Employee details 
+
+```http
+PUT /api/employees/:id
+```
+### Add Employee to the database
+```http
+POST /api/employees
+```
+
+### Delete Employee by their id
+```http
+Delete /api/employees/:id
+```
+
+### Search employees by name
+```http
+GET /api/employees/name/<quere params>:name
+```
+### Get all employees in Specific department
+```http
+GET /api/employees/dept/:department
+```
